@@ -570,7 +570,10 @@ class SSHSpawner(LocalProcessSpawner):
         await self._signal(signal.SIGKILL)
 
         # close the tunnel
-        os.remove(self.ssh_socket)
+        try:
+            os.remove(self.ssh_socket)
+        except FileNotFoundError:
+            pass
 
     async def poll(self):
         """Poll the spawned process to see if it is still running and reachable
