@@ -199,7 +199,8 @@ class SSHSpawner(LocalProcessSpawner):
 
         opts = {
             "ControlMaster": "auto",
-            "ControlPath": "/tmp/%r@%h",
+            # "ControlPath": "/tmp/%r@%h",
+            "ControlPath": self.ssh_socket,
             "ControlPersist": persist,
             "BatchMode": batch_mode,
         }
