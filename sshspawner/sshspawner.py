@@ -212,7 +212,7 @@ class SSHSpawner(LocalProcessSpawner):
             opts["StrictHostKeyChecking"] = "no"
 
         if other_opts:
-            opts.extend(other_opts)
+            opts.update(other_opts)
 
         tmpl = "-o {opt}={val}"
         return ' '.join(
