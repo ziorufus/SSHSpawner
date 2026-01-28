@@ -257,6 +257,9 @@ class SSHSpawner(LocalProcessSpawner):
             d = {}
             lines = output.split('\n')
             for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
                 divided = line.split('=')
                 if len(divided) == 2:
                     var, val = divided
