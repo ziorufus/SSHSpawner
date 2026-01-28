@@ -67,6 +67,16 @@ class SSHSpawner(LocalProcessSpawner):
         help="Hostname of the hub host. Useful if the Hub is in a container."
     ).tag(config=True)
 
+    alt_user = Unicode(
+        "",
+        help="Alternative username for SSH"
+    ).tag(config=True)
+
+    alt_key = Unicode(
+        "",
+        help="Alternative key for SSH"
+    ).tag(config=True)
+
     known_hosts = Unicode(
         "/opt/jupyter/known_hosts",
         help="Premade known_hosts file to enable trusted, seamless ssh."
@@ -274,8 +284,15 @@ class SSHSpawner(LocalProcessSpawner):
                 known_hosts=self.known_hosts
             )
             self.log.info("Collecting remote environment from {}".format(host))
+            alt_user = ""
+            if self.alt_user:
+                alt_user = "-l {}".format(self.alt_user)
+            alt_key = ""
+            if self.alt_key:
+                alt_key = "-i {}".format(self.alt_key)
             child = self.spawn_as_user(
-                "ssh {opts} {host} env".format(opts=opts, host=host)
+                "ssh {alt_user} {alt_key} {opts} {host} env"
+                .format(alt_key=alt_key, alt_user=alt_user, opts=opts, host=host)
             )
             child.expect(pexpect.EOF)
             return env_str_to_dict(child.before)
@@ -439,8 +456,15 @@ class SSHSpawner(LocalProcessSpawner):
                 shutil.chown(f, user=uid, group=gid)
 
             # Create remote directory in user's home
+            alt_user = ""
+            if self.alt_user:
+                alt_user = "-l {}".format(self.alt_user)
+            alt_key = ""
+            if self.alt_key:
+                alt_key = "-i {}".format(self.alt_key)
             create_dir_proc = self.spawn_as_user(
-                "ssh {opts} {host} mkdir -p {path}".format(
+                "ssh {alt_user} {alt_key} {opts} {host} mkdir -p {path}".format(
+                    alt_key=alt_key, alt_user=alt_user,
                     opts=opts,
                     host=self.ssh_target,
                     path=self.resource_path
@@ -448,8 +472,11 @@ class SSHSpawner(LocalProcessSpawner):
             )
             create_dir_proc.expect(pexpect.EOF)
 
+            if self.alt_user:
+                alt_user = "{}@".format(self.alt_user)
             copy_files_proc = self.spawn_as_user(
-                "scp {opts} {files} {host}:{target_dir}/".format(
+                "scp {alt_key} {opts} {files} {alt_user}{host}:{target_dir}/".format(
+                    alt_key=alt_key, alt_user=alt_user,
                     opts=opts,
                     files=' '.join([os.path.join(local_resource_path, f)
                                     for f in os.listdir(local_resource_path)]),
@@ -478,8 +505,11 @@ class SSHSpawner(LocalProcessSpawner):
                 ))
 
             # Start remote notebook
+            if self.alt_user:
+                alt_user = "-l {}".format(self.alt_user)
             start_notebook_child = self.spawn_as_user(
-                "ssh {opts} -L {port}:{ip}:{port} {host} {cmd}".format(
+                "ssh {alt_key} {alt_user} {opts} -L {port}:{ip}:{port} {host} {cmd}".format(
+                    alt_key=alt_key, alt_user=alt_user,
                     ip="127.0.0.1",
                     port=self.port,
                     opts=opts,
@@ -518,7 +548,14 @@ class SSHSpawner(LocalProcessSpawner):
                       "{host}".format(user=self.user.name, port=self.port,
                                       host=self.ssh_target))
 
-        stop_child = self.spawn_as_user("ssh {opts} {host} {cmd}".format(
+        alt_user = ""
+        if self.alt_user:
+            alt_user = "-l {}".format(self.alt_user)
+        alt_key = ""
+        if self.alt_key:
+            alt_key = "-i {}".format(self.alt_key)
+        stop_child = self.spawn_as_user("ssh {alt_key} {alt_user} {opts} {host} {cmd}".format(
+                alt_key=alt_key, alt_user=alt_user,
                 opts=self.ssh_opts(known_hosts=self.known_hosts),
                 host=self.ssh_target,
                 cmd=self.stop_notebook_cmd
