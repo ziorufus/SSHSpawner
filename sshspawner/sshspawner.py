@@ -356,6 +356,7 @@ class SSHSpawner(LocalProcessSpawner):
             .format(timeout=self.idle_timeout)
         )
         args.append('--KernelManager.transport=ipc')
+        args.append('--ServerApp.port={}'.format(self.port))
 
         if self.local_logfile:
             args.append('2>&1 | tee -a {base}/{logfile}'.format(
